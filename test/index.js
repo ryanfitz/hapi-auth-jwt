@@ -90,6 +90,35 @@ describe('Token', function () {
     });
   });
 
+  it('returns decoded token when no validation function is set', function (done) {
+
+    var handler = function (request, reply) {
+      expect(request.auth.isAuthenticated).to.equal(true);
+      expect(request.auth.credentials).to.exist;
+      reply('ok');
+    };
+
+    var server = new Hapi.Server({ debug: false });
+    server.pack.require('../', function (err) {
+      expect(err).to.not.exist;
+
+      server.auth.strategy('default', 'jwt', 'required', { key: privateKey });
+
+      server.route([
+        { method: 'POST', path: '/token', handler: handler, config: { auth: true } }
+      ]);
+    });
+
+    var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader('john') } };
+
+    server.inject(request, function (res) {
+
+      expect(res.result).to.exist;
+      expect(res.result).to.equal('ok');
+      done();
+    });
+  });
+
   it('returns an error on wrong scheme', function (done) {
 
     var request = { method: 'POST', url: '/token', headers: { authorization: 'Steve something' } };
@@ -130,6 +159,18 @@ describe('Token', function () {
 
     server.inject(request, function (res) {
       expect(res.result.message).to.equal('Expired token received for JSON Web Token validation');
+      expect(res.statusCode).to.equal(401);
+      done();
+    });
+  });
+
+  it('returns an error with invalid token', function (done) {
+    var token = tokenHeader('john') + '123456123123';
+
+    var request = { method: 'POST', url: '/token', headers: { authorization: token } };
+
+    server.inject(request, function (res) {
+      expect(res.result.message).to.equal('Invalid signature received for JSON Web Token validation');
       expect(res.statusCode).to.equal(401);
       done();
     });

@@ -24,7 +24,11 @@
   },
   "devDependencies": {
     "hapi": "2.x.x",
-    "lab": "1.x.x"
+    "lab": "1.x.x",
+    "grunt": "~0.4.2",
+    "grunt-contrib-jshint": "~0.8.0",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-bump": "0.0.13"
   },
   "scripts": {
     "test": "make test-cov"

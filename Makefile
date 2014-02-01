@@ -1,3 +1,7 @@
+default: jshint test
+
+jshint:
+	@grunt
 test:
 	@node node_modules/lab/bin/lab
 test-cov: 

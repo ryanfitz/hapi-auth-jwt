@@ -5,19 +5,12 @@ var Hapi = require('hapi');
 var jwt  = require('jsonwebtoken');
 
 
-// Declare internals
-
-var internals = {};
-
-
 // Test shortcuts
 
 var expect = Lab.expect;
 var before = Lab.before;
-var after = Lab.after;
 var describe = Lab.experiment;
 var it = Lab.test;
-
 
 describe('Token', function () {
   var privateKey = 'PajeH0mz4of85T9FB1oFzaB39lbNLbDbtCQ';

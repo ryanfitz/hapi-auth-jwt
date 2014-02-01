@@ -7,7 +7,6 @@
 JSON Web Token authentication requires verifying a signed token. The `'jwt'` scheme takes the following options:
 
 - `key` - (required) The private key the token was signed with.
-- `algorithm` - (optional) if `true`, allows making requests with an empty username. Defaults to `HS256`.
 - `validateFunc` - (optional) a user lookup and password validation function with the signature `function(username, password, callback)` where:
     - `token` - the verified and decoded jwt token
     - `callback` - a callback function with the signature `function(err, isValid, credentials)` where:

@@ -1,22 +1,23 @@
 {
-  "name": "hapi-auth-basic",
-  "description": "Basic authentication plugin",
-  "version": "1.0.0",
-  "author": "Eran Hammer <eran@hueniverse.com> (http://hueniverse.com)",
-  "repository": "git://github.com/spumko/hapi-auth-basic",
+  "name": "hapi-auth-jwt",
+  "description": "JSON Web Token (JWT) authentication plugin",
+  "version": "0.1.0",
+  "author": "Ryan Fitzgerald <ryan.fitz1@gmail.com>",
+  "repository": "git://github.com/ryanfitz/hapi-auth-jwt",
   "main": "index",
   "keywords": [
     "hapi",
     "plugin",
     "auth",
-    "basic"
+    "JWT"
   ],
   "engines": {
     "node": "0.10.x"
   },
   "dependencies": {
     "boom": "2.x.x",
-    "hoek": "1.x.x"
+    "hoek": "1.x.x",
+    "jsonwebtoken": "~0.1.0"
   },
   "peerDependencies": {
     "hapi": "2.x.x"
@@ -31,7 +32,7 @@
   "licenses": [
     {
       "type": "BSD",
-      "url": "http://github.com/spumko/hapi-auth-basic/raw/master/LICENSE"
+      "url": "http://github.com/ryanfitz/hapi-auth-jwt/raw/master/LICENSE"
     }
   ]
 }

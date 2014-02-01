@@ -2,7 +2,7 @@
 
 [**hapi**](https://github.com/spumko/hapi) JSON Web Token (JWT) authentication plugin
 
-[![Build Status](https://secure.travis-ci.org/ryanfitz/hapi-auth-jwt)](http://travis-ci.org/spumko/hapi-auth-jwt)
+[![Build Status](https://secure.travis-ci.org/ryanfitz/hapi-auth-jwt)](http://travis-ci.org/ryanfitz/hapi-auth-jwt)
 
 JSON Web Token authentication requires verifying a signed token. The `'jwt'` scheme takes the following options:
 

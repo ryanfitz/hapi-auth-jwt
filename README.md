@@ -7,11 +7,11 @@
 JSON Web Token authentication requires verifying a signed token. The `'jwt'` scheme takes the following options:
 
 - `key` - (required) The private key the token was signed with.
-- `validateFunc` - (optional) a user lookup and password validation function with the signature `function(username, password, callback)` where:
+- `validateFunc` - (optional) validation and user lookup function with the signature `function(toke, callback)` where:
     - `token` - the verified and decoded jwt token
     - `callback` - a callback function with the signature `function(err, isValid, credentials)` where:
         - `err` - an internal error.
-        - `isValid` - `true` if both the username was found and the password matched, otherwise `false`.
+        - `isValid` - `true` if the token was valid otherwise `false`.
         - `credentials` - a credentials object passed back to the application in `request.auth.credentials`. Typically, `credentials` are only
           included when `isValid` is `true`, but there are cases when the application needs to know who tried to authenticate even when it fails
           (e.g. with authentication mode `'try'`).
@@ -21,8 +21,9 @@ JSON Web Token authentication requires verifying a signed token. The `'jwt'` sch
 var accounts = {
     123: {
       id: 123
-      username: 'john',
-      name: 'John Doe'
+      user: 'john',
+      name: 'John Doe',
+      scope: ['a', 'b']
     }
 };
 

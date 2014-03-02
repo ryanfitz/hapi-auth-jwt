@@ -16,20 +16,22 @@ JSON Web Token authentication requires verifying a signed token. The `'jwt'` sch
           included when `isValid` is `true`, but there are cases when the application needs to know who tried to authenticate even when it fails
           (e.g. with authentication mode `'try'`).
 
+See the example folder for an executable example.
+
 ```javascript
 
 var accounts = {
     123: {
-      id: 123
+      id: 123,
       user: 'john',
       name: 'John Doe',
       scope: ['a', 'b']
     }
 };
 
-var validate = function (token, callback) {
+var validate = function (decodedToken, callback) {
 
-    var account = users[token.accountID];
+    var account = accounts[decodedToken.accountID];
     if (!user) {
         return callback(null, false);
     }

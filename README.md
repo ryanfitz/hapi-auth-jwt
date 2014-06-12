@@ -32,7 +32,7 @@ var accounts = {
 var validate = function (decodedToken, callback) {
 
     var account = accounts[decodedToken.accountID];
-    if (!user) {
+    if (!account) {
         return callback(null, false);
     }
 

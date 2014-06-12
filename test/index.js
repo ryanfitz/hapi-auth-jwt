@@ -30,12 +30,12 @@ describe('Token', function () {
         scope: ['a'],
         tos: '1.0.0'
       });
-    }
-    else if (username === 'jane') {
+    } else if (username === 'jane') {
       return callback(Hapi.error.internal('boom'));
-    }
-    else if (username === 'invalid1') {
+    } else if (username === 'invalid1') {
       return callback(null, true, 'bad');
+    } else if (username === 'nullman') {
+      return callback(null, true, null);
     }
 
     return callback(null, false);
@@ -59,13 +59,13 @@ describe('Token', function () {
   var server = new Hapi.Server({ debug: false });
   before(function (done) {
 
-    server.pack.require('../', function (err) {
+    server.pack.register(require('../'), function (err) {
 
       expect(err).to.not.exist;
       server.auth.strategy('default', 'jwt', 'required', { key: privateKey,  validateFunc: loadUser });
 
       server.route([
-        { method: 'POST', path: '/token', handler: tokenHandler, config: { auth: true } },
+        { method: 'POST', path: '/token', handler: tokenHandler, config: { auth: 'default' } },
         { method: 'POST', path: '/tokenOptional', handler: tokenHandler, config: { auth: { mode: 'optional' } } },
         { method: 'POST', path: '/tokenScope', handler: tokenHandler, config: { auth: { scope: 'x' } } },
         { method: 'POST', path: '/tokenArrayScope', handler: tokenHandler, config: { auth: { scope: ['x', 'y'] } } },
@@ -99,13 +99,13 @@ describe('Token', function () {
     };
 
     var server = new Hapi.Server({ debug: false });
-    server.pack.require('../', function (err) {
+    server.pack.register(require('../'), function (err) {
       expect(err).to.not.exist;
 
       server.auth.strategy('default', 'jwt', 'required', { key: privateKey });
 
       server.route([
-        { method: 'POST', path: '/token', handler: handler, config: { auth: true } }
+        { method: 'POST', path: '/token', handler: handler, config: { auth: 'default' } }
       ]);
     });
 
@@ -242,6 +242,18 @@ describe('Token', function () {
   it('returns an error on non-object credentials error', function (done) {
 
     var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader('invalid1') } };
+
+    server.inject(request, function (res) {
+
+      expect(res.result).to.exist;
+      expect(res.statusCode).to.equal(500);
+      done();
+    });
+  });
+
+  it('returns an error on null credentials error', function (done) {
+
+    var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader('nullman') } };
 
     server.inject(request, function (res) {
 

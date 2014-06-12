@@ -1,9 +1,6 @@
-var Hapi = require('hapi');
-var jwt = require('jsonwebtoken');
-
-var options = {cors: true};
-
-var server = Hapi.createServer('0.0.0.0', 8080, options);
+var Hapi = require('hapi'),
+    jwt = require('jsonwebtoken'),
+    server = Hapi.createServer('0.0.0.0', 8080, { cors: true });
 
 var privateKey = 'YourApplicationsPrivateKey';
 
@@ -12,7 +9,7 @@ var accounts = {
       id: 123,
       user: 'john',
       fullName: 'John Q Public'
-    } 
+    }
 };
 
 var token = jwt.sign({ accountId: 123 }, privateKey);
@@ -29,7 +26,7 @@ var validate = function (decodedToken, callback) {
     }
 
     var account = accounts[decodedToken.accountId];
-    
+
     if (!account) {
       return callback(null, false);
     }
@@ -38,16 +35,16 @@ var validate = function (decodedToken, callback) {
 };
 
 
-server.pack.require('hapi-auth-jwt', function (err) {
-    
+server.pack.register(require('hapi-auth-jwt'), function (err) {
+
     server.auth.strategy('token', 'jwt', { key: privateKey,  validateFunc: validate });
 
-    server.route({ 
+    server.route({
       // GET to http://localhost:8080/tokenRequired
       // with authorization in the request headers set to Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhY2NvdW50SWQiOjEyMywiaWF0IjoxMzkyNTg2NzgwfQ.nZT1lsYoJvudjEYodUdgPR-32NNHk7uSnIHeIHY5se0
-      // That is, the text 'Bearer ' + the token. 
-      method: 'GET', 
-      path: '/tokenRequired', 
+      // That is, the text 'Bearer ' + the token.
+      method: 'GET',
+      path: '/tokenRequired',
       config: { auth: 'token' },
       handler: function(request, reply) {
         var replyObj = {text: 'I am a JSON response, and you needed a token to get me.', credentials: request.auth.credentials};
@@ -68,6 +65,6 @@ server.pack.require('hapi-auth-jwt', function (err) {
     });
 
 });
-  
+
 
 server.start();

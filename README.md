@@ -39,7 +39,7 @@ var validate = function (decodedToken, callback) {
     callback(err, isValid, {id: account.id, name: account.name });
 };
 
-server.pack.require('hapi-auth-jwt', function (err) {
+server.pack.register(require('hapi-auth-jwt'), function (err) {
     var privateKey = 'BbZJjyoXAdr8BUZuiKKARWimKfrSmQ6fv8kZ7OFfc';
 
     server.auth.strategy('token', 'jwt', { key: privatekey,  validateFunc: validate });

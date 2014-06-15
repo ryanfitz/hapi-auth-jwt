@@ -59,7 +59,7 @@ describe('Token', function () {
   var server = new Hapi.Server({ debug: false });
   before(function (done) {
 
-    server.pack.require('../', function (err) {
+    server.pack.register(require('../'), function (err) {
 
       expect(err).to.not.exist;
       server.auth.strategy('default', 'jwt', 'required', { key: privateKey,  validateFunc: loadUser });

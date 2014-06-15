@@ -65,7 +65,7 @@ describe('Token', function () {
       server.auth.strategy('default', 'jwt', 'required', { key: privateKey,  validateFunc: loadUser });
 
       server.route([
-        { method: 'POST', path: '/token', handler: tokenHandler, config: { auth: true } },
+        { method: 'POST', path: '/token', handler: tokenHandler, config: { auth: 'default' } },
         { method: 'POST', path: '/tokenOptional', handler: tokenHandler, config: { auth: { mode: 'optional' } } },
         { method: 'POST', path: '/tokenScope', handler: tokenHandler, config: { auth: { scope: 'x' } } },
         { method: 'POST', path: '/tokenArrayScope', handler: tokenHandler, config: { auth: { scope: ['x', 'y'] } } },
@@ -99,13 +99,13 @@ describe('Token', function () {
     };
 
     var server = new Hapi.Server({ debug: false });
-    server.pack.require('../', function (err) {
+    server.pack.register(require('../'), function (err) {
       expect(err).to.not.exist;
 
       server.auth.strategy('default', 'jwt', 'required', { key: privateKey });
 
       server.route([
-        { method: 'POST', path: '/token', handler: handler, config: { auth: true } }
+        { method: 'POST', path: '/token', handler: handler, config: { auth: 'default' } }
       ]);
     });
 

@@ -9,10 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "hapi": "~2.3.0",
-    "yar": "~1.1.0",
+    "hapi": "~6.x.x",
     "hapi-auth-jwt": "~0.1.1",
-    "joi": "~2.7.0",
     "jsonwebtoken": "~0.1.0"
   }
 }

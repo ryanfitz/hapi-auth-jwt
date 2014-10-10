@@ -20,6 +20,11 @@ describe('Dynamic Secret', function () {
     'jane': 'janekey'
   };
 
+  var info = {
+    'john': 'johninfo',
+    'jane': 'janeinfo',
+  }
+
   var tokenHeader = function (username, options) {
     if (!keys[username]){
       throw new Error('Invalid user name ' + username + '. Valid options \'john\' or \'jane\'');
@@ -38,8 +43,13 @@ describe('Dynamic Secret', function () {
     getKey.lastToken = token;
     var data = jwt.decode(token);
     Hoek.nextTick(function(){
-      callback(null, keys[data.username]);
+      callback(null, keys[data.username], info[data.username]);
     })();
+  }
+
+  var validateFunc = function(decoded, extraInfo, callback){
+    validateFunc.lastExtraInfo = extraInfo;
+    callback(null, true, decoded);
   }
 
   var errorGetKey = function(token, callback){
@@ -57,7 +67,7 @@ describe('Dynamic Secret', function () {
       expect(err).to.not.exist;
       server.auth.strategy('normalError', 'jwt', false, { key: errorGetKey });
       server.auth.strategy('boomError', 'jwt', false, { key: boomErrorGetKey });
-      server.auth.strategy('default', 'jwt', false, { key: getKey });
+      server.auth.strategy('default', 'jwt', false, { key: getKey, validateFunc: validateFunc });
       server.route([
         { method: 'POST', path: '/token', handler: tokenHandler, config: { auth: 'default' } },
         { method: 'POST', path: '/normalError', handler: tokenHandler, config: { auth: 'normalError' } },
@@ -84,6 +94,19 @@ describe('Dynamic Secret', function () {
 
           done();
         });
+      });
+    });
+
+    it('uses validateFunc function passing ' + user + '\'s extra info if ' + user + ' is user', function (done) {
+
+      var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader(user) } };
+
+      server.inject(request, function (res) {
+        expect(res.result).to.exist;
+        expect(res.result).to.equal(user);
+
+        expect(validateFunc.lastExtraInfo).to.equal(info[user]);
+        done();
       });
     });
   });

@@ -1,7 +1,7 @@
 {
   "name": "hapi-auth-jwt",
   "description": "JSON Web Token (JWT) authentication plugin",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Ryan Fitzgerald <ryan.fitz1@gmail.com>",
   "repository": "git://github.com/ryanfitz/hapi-auth-jwt",
   "main": "index",

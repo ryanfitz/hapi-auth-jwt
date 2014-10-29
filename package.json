@@ -23,7 +23,7 @@
     "hapi": ">=6.x.x"
   },
   "devDependencies": {
-    "hapi": "6.x.x",
+    "hapi": "7.x.x",
     "lab": "3.x.x",
     "grunt": "~0.4.5",
     "grunt-contrib-jshint": "0.10.x",

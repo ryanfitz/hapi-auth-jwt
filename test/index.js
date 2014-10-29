@@ -27,8 +27,7 @@ describe('Token', function () {
     if (username === 'john') {
       return callback(null, true, {
         user: 'john',
-        scope: ['a'],
-        tos: '1.0.0'
+        scope: ['a']
       });
     } else if (username === 'jane') {
       return callback(Hapi.error.internal('boom'));
@@ -70,7 +69,6 @@ describe('Token', function () {
         { method: 'POST', path: '/tokenScope', handler: tokenHandler, config: { auth: { scope: 'x' } } },
         { method: 'POST', path: '/tokenArrayScope', handler: tokenHandler, config: { auth: { scope: ['x', 'y'] } } },
         { method: 'POST', path: '/tokenArrayScopeA', handler: tokenHandler, config: { auth: { scope: ['x', 'y', 'a'] } } },
-        { method: 'POST', path: '/tokenTos', handler: tokenHandler, config: { auth: { tos: '1.1.x' } } },
         { method: 'POST', path: '/double', handler: doubleHandler }
       ]);
 
@@ -259,18 +257,6 @@ describe('Token', function () {
 
       expect(res.result).to.exist;
       expect(res.statusCode).to.equal(500);
-      done();
-    });
-  });
-
-  it('returns an error on insufficient tos', function (done) {
-
-    var request = { method: 'POST', url: '/tokenTos', headers: { authorization: tokenHeader('john') } };
-
-    server.inject(request, function (res) {
-
-      expect(res.result).to.exist;
-      expect(res.statusCode).to.equal(403);
       done();
     });
   });

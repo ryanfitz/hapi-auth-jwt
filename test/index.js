@@ -1,16 +1,19 @@
 // Load modules
 
-var Lab  = require('lab');
+var Boom = require('boom');
+var Code = require('code');
 var Hapi = require('hapi');
-var jwt  = require('jsonwebtoken');
+var Jwt  = require('jsonwebtoken');
+var Lab  = require('lab');
 
 
 // Test shortcuts
 
-var expect = Lab.expect;
-var before = Lab.before;
-var describe = Lab.experiment;
-var it = Lab.test;
+var lab = exports.lab = Lab.script();
+var before = lab.before;
+var describe = lab.describe;
+var it = lab.it;
+var expect = Code.expect;
 
 describe('Token', function () {
   var privateKey = 'PajeH0mz4of85T9FB1oFzaB39lbNLbDbtCQ';
@@ -18,7 +21,7 @@ describe('Token', function () {
   var tokenHeader = function (username, options) {
     options = options || {};
 
-    return 'Bearer ' + jwt.sign({username : username}, privateKey, options);
+    return 'Bearer ' + Jwt.sign({username : username}, privateKey, options);
   };
 
   var loadUser = function (decodedToken, callback) {
@@ -30,7 +33,7 @@ describe('Token', function () {
         scope: ['a']
       });
     } else if (username === 'jane') {
-      return callback(Hapi.error.internal('boom'));
+      return callback(Boom.badImplementation());
     } else if (username === 'invalid1') {
       return callback(null, true, 'bad');
     } else if (username === 'nullman') {
@@ -56,9 +59,10 @@ describe('Token', function () {
   };
 
   var server = new Hapi.Server({ debug: false });
+  server.connection();
   before(function (done) {
 
-    server.pack.register(require('../'), function (err) {
+    server.register(require('../'), function (err) {
 
       expect(err).to.not.exist;
       server.auth.strategy('default', 'jwt', 'required', { key: privateKey,  validateFunc: loadUser });
@@ -97,7 +101,8 @@ describe('Token', function () {
     };
 
     var server = new Hapi.Server({ debug: false });
-    server.pack.register(require('../'), function (err) {
+    server.connection();
+    server.register(require('../'), function (err) {
       expect(err).to.not.exist;
 
       server.auth.strategy('default', 'jwt', 'required', { key: privateKey });
@@ -309,4 +314,3 @@ describe('Token', function () {
   });
 
 });
-

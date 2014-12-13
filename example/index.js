@@ -1,6 +1,8 @@
 var Hapi = require('hapi'),
     jwt = require('jsonwebtoken'),
-    server = Hapi.createServer('0.0.0.0', 8080, { cors: true });
+    server = new Hapi.Server();
+
+server.connection({ port: 8080 });
 
 var privateKey = 'YourApplicationsPrivateKey';
 
@@ -35,7 +37,7 @@ var validate = function (decodedToken, callback) {
 };
 
 
-server.pack.register(require('../index'), function (err) {
+server.register(require('../index'), function (err) {
 
     server.auth.strategy('token', 'jwt', { key: privateKey,  validateFunc: validate });
 

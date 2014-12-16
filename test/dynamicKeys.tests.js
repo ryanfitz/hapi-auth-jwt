@@ -2,6 +2,7 @@
 
 var Lab  = require('lab');
 var Hapi = require('hapi');
+var Code = require('code');
 var Hoek = require('hoek')
 var Boom = require('boom');
 var jwt  = require('jsonwebtoken');
@@ -9,10 +10,11 @@ var jwt  = require('jsonwebtoken');
 
 // Test shortcuts
 
-var expect = Lab.expect;
-var before = Lab.before;
-var describe = Lab.experiment;
-var it = Lab.test;
+var lab = exports.lab = Lab.script();
+var expect = Code.expect;
+var before = lab.before;
+var describe = lab.describe;
+var it = lab.it;
 
 describe('Dynamic Secret', function () {
   var keys = {
@@ -61,9 +63,10 @@ describe('Dynamic Secret', function () {
   }
 
   var server = new Hapi.Server({ debug: false });
+  server.connection();
 
   before(function (done) {
-    server.pack.register(require('../'), function (err) {
+    server.register(require('../'), function (err) {
       expect(err).to.not.exist;
       server.auth.strategy('normalError', 'jwt', false, { key: errorGetKey });
       server.auth.strategy('boomError', 'jwt', false, { key: boomErrorGetKey });

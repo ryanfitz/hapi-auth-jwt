@@ -1,4 +1,5 @@
 var Hapi = require('hapi'),
+    hapiAuthJwt = require('../index'),
     jwt = require('jsonwebtoken'),
     server = new Hapi.Server();
 
@@ -33,11 +34,10 @@ var validate = function (decodedToken, callback) {
       return callback(null, false);
     }
 
-    return callback(null, true, account)
+    return callback(null, true, account);
 };
 
-
-server.register(require('../index'), function (err) {
+server.register(hapiAuthJwt, function () {
 
     server.auth.strategy('token', 'jwt', { key: privateKey,  validateFunc: validate });
 

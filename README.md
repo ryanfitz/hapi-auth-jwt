@@ -58,7 +58,7 @@ var validate = function (decodedToken, callback) {
 };
 
 
-server.register(require('../index'), function (error) {
+server.register(require('hapi-auth-jwt'), function (error) {
 
     server.auth.strategy('token', 'jwt', {
         key: privateKey,

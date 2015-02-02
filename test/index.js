@@ -38,6 +38,8 @@ describe('Token', function () {
       return callback(null, true, 'bad');
     } else if (username === 'nullman') {
       return callback(null, true, null);
+    } else if (username === 'artifact') {
+      return callback(null, true, { user : 'artifact' }, { token : decodedToken });
     }
 
     return callback(null, false);
@@ -97,6 +99,7 @@ describe('Token', function () {
     var handler = function (request, reply) {
       expect(request.auth.isAuthenticated).to.equal(true);
       expect(request.auth.credentials).to.exist;
+      expect(request.auth.artifacts).to.not.exist;
       reply('ok');
     };
 
@@ -113,6 +116,38 @@ describe('Token', function () {
     });
 
     var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader('john') } };
+
+    server.inject(request, function (res) {
+
+      expect(res.result).to.exist;
+      expect(res.result).to.equal('ok');
+      done();
+    });
+  });
+
+  it('returns artifacts if returned from validation function', function (done) {
+
+    var handler = function (request, reply) {
+      expect(request.auth.isAuthenticated).to.equal(true);
+      expect(request.auth.credentials).to.exist;
+      expect(request.auth.artifacts).to.be.an.object;
+      expect(request.auth.artifacts.token).to.exist;
+      reply('ok');
+    };
+
+    var server = new Hapi.Server({ debug: false });
+    server.connection();
+    server.register(require('../'), function (err) {
+      expect(err).to.not.exist;
+
+      server.auth.strategy('default', 'jwt', 'required', { key: privateKey, validateFunc : loadUser });
+
+      server.route([
+        { method: 'POST', path: '/token', handler: handler, config: { auth: 'default' } }
+      ]);
+    });
+
+    var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader('artifact') } };
 
     server.inject(request, function (res) {
 

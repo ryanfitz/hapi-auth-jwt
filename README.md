@@ -15,6 +15,7 @@ JSON Web Token authentication requires verifying a signed token. The `'jwt'` sch
         - `credentials` - a credentials object passed back to the application in `request.auth.credentials`. Typically, `credentials` are only
           included when `isValid` is `true`, but there are cases when the application needs to know who tried to authenticate even when it fails
           (e.g. with authentication mode `'try'`).
+        - `artifacts` - (optional) an artifact object received from the authentication strategy and used in authentication-related actions.
 
 See the example folder for an executable example.
 
@@ -39,7 +40,7 @@ var accounts = {
 
 var privateKey = 'BbZJjyoXAdr8BUZuiKKARWimKfrSmQ6fv8kZ7OFfc';
 
-// Use this token to build your request with the 'Authorization' header.  
+// Use this token to build your request with the 'Authorization' header.
 // Ex:
 //     Authorization: Bearer <token>
 var token = jwt.sign({ accountId: 123 }, privateKey);
@@ -54,7 +55,9 @@ var validate = function (decodedToken, callback) {
         return callback(error, false, credentials);
     }
 
-    return callback(error, true, credentials)
+    var artifacts = { token : decodedToken };
+
+    return callback(error, true, credentials, artifacts)
 };
 
 

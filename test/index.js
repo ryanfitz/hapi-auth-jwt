@@ -313,4 +313,29 @@ describe('Token', function () {
     done();
   });
 
+  it('redirects instead of replying if redirectUrl is provided', function(done) {
+    var handler = function () {};
+
+    var server = new Hapi.Server({ debug: false });
+    var redirectUrl = "http://testUrl";
+    server.connection();
+    server.register(require('../'), function (err) {
+      expect(err).to.not.exist;
+
+      server.auth.strategy('token', 'jwt', 'required', { key: privateKey + 'a', redirectUrl: redirectUrl });
+
+      server.route([
+        { method: 'POST', path: '/token', handler: handler, config: { auth: 'token' } }
+      ]);
+    });
+
+    var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader('nullman') } };
+
+    server.inject(request, function (res) {
+      expect(res.statusCode).to.equal(302);
+      expect(res.headers).to.exist;
+      expect(res.headers.location).to.equal(redirectUrl);
+      done();
+    });
+  });
 });

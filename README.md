@@ -15,7 +15,8 @@ JSON Web Token authentication requires verifying a signed token. The `'jwt'` sch
         - `credentials` - a credentials object passed back to the application in `request.auth.credentials`. Typically, `credentials` are only
           included when `isValid` is `true`, but there are cases when the application needs to know who tried to authenticate even when it fails
           (e.g. with authentication mode `'try'`).
-
+        - redirectUrl` - (optional) On error of jwt token instead of replying this will automaticly redirect the user.
+ 
 See the example folder for an executable example.
 
 ```javascript

@@ -1,7 +1,7 @@
 {
   "name": "hapi-auth-jwt",
   "description": "JSON Web Token (JWT) authentication plugin",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "author": "Ryan Fitzgerald <ryan.fitz1@gmail.com>",
   "repository": "git://github.com/ryanfitz/hapi-auth-jwt",
   "main": "index",
@@ -17,7 +17,7 @@
   "dependencies": {
     "boom": "2.x.x",
     "hoek": "2.x.x",
-    "jsonwebtoken": "3.2.x"
+    "jsonwebtoken": "4.0.0"
   },
   "peerDependencies": {
     "hapi": ">=8.x.x"
@@ -30,7 +30,7 @@
     "grunt": "0.4.x",
     "grunt-contrib-jshint": "0.11.x",
     "grunt-contrib-watch": "0.6.x",
-    "grunt-bump": "0.1.x"
+    "grunt-bump": "0.3.0"
   },
   "scripts": {
     "test": "make test-cov"

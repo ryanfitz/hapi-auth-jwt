@@ -3,7 +3,7 @@
 var Lab  = require('lab');
 var Hapi = require('hapi');
 var Code = require('code');
-var Hoek = require('hoek');
+var Hoek = require('hoek')
 var Boom = require('boom');
 var jwt  = require('jsonwebtoken');
 
@@ -25,7 +25,7 @@ describe('Dynamic Secret', function () {
   var info = {
     'john': 'johninfo',
     'jane': 'janeinfo',
-  };
+  }
 
   var tokenHeader = function (username, options) {
     if (!keys[username]){
@@ -47,20 +47,20 @@ describe('Dynamic Secret', function () {
     Hoek.nextTick(function(){
       callback(null, keys[data.username], info[data.username]);
     })();
-  };
+  }
 
   var validateFunc = function(decoded, extraInfo, callback){
     validateFunc.lastExtraInfo = extraInfo;
     callback(null, true, decoded);
-  };
+  }
 
   var errorGetKey = function(token, callback){
     callback(new Error('Failed'));
-  };
+  }
 
   var boomErrorGetKey = function(token, callback){
     callback(Boom.forbidden('forbidden'));
-  };
+  }
 
   var server = new Hapi.Server({ debug: false });
   server.connection();

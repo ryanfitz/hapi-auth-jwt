@@ -8,6 +8,7 @@ JSON Web Token authentication requires verifying a signed token. The `'jwt'` sch
 
 - `key` - (required) The private key the token was signed with.
 - `validateFunc` - (optional) validation and user lookup function with the signature `function(token, callback)` where:
+    - `request` - is the hapi request object of the request which is being authenticated.
     - `token` - the verified and decoded jwt token
     - `callback` - a callback function with the signature `function(err, isValid, credentials)` where:
         - `err` - an internal error.
@@ -45,7 +46,7 @@ var privateKey = 'BbZJjyoXAdr8BUZuiKKARWimKfrSmQ6fv8kZ7OFfc';
 var token = jwt.sign({ accountId: 123 }, privateKey);
 
 
-var validate = function (decodedToken, callback) {
+var validate = function (request, decodedToken, callback) {
 
     var error,
         credentials = accounts[decodedToken.accountId] || {};

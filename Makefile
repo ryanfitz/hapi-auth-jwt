@@ -1,10 +1,13 @@
-default: jshint test
+SRC = $(shell find lib -name "*.js" -type f | sort)
+TESTSRC = $(shell find test -name "*.js" -type f | sort)
 
-jshint:
-	@grunt
-test:
+default: test
+
+lint: $(SRC) $(TESTSRC)
+	@node_modules/.bin/jshint --reporter node_modules/jshint-stylish/stylish.js $^
+test: lint
 	@node node_modules/lab/bin/lab
-test-cov: 
+test-cov:
 	@node node_modules/lab/bin/lab -t 100
 test-cov-html:
 	@node node_modules/lab/bin/lab -r html -o coverage.html

@@ -20,7 +20,7 @@ var token = jwt.sign({ accountId: 123 }, privateKey);
 // use this token to build your web request.  You'll need to add it to the headers as 'authorization'.  And you will need to prefix it with 'Bearer '
 console.log('token: ' + token);
 
-var validate = function (decodedToken, callback) {
+var validate = function (request, decodedToken, callback) {
 
     console.log(decodedToken);  // should be {accountId : 123}.
 

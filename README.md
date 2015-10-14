@@ -7,7 +7,7 @@
 JSON Web Token authentication requires verifying a signed token. The `'jwt'` scheme takes the following options:
 
 - `key` - (required) The private key the token was signed with.
-- `validateFunc` - (optional) validation and user lookup function with the signature `function(token, callback)` where:
+- `validateFunc` - (optional) validation and user lookup function with the signature `function(request, token, callback)` where:
     - `request` - is the hapi request object of the request which is being authenticated.
     - `token` - the verified and decoded jwt token
     - `callback` - a callback function with the signature `function(err, isValid, credentials)` where:

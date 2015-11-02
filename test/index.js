@@ -92,6 +92,36 @@ describe('Token', function () {
     });
   });
 
+  it('returns a reply on successful auth with audience (aud) and issuer (iss) as options', function (done) {
+
+    var handler = function (request, reply) {
+      expect(request.auth.isAuthenticated).to.equal(true);
+      expect(request.auth.credentials).to.exist;
+      reply('ok');
+    };
+
+    var server = new Hapi.Server({ debug: false });
+    server.connection();
+    server.register(require('../'), function (err) {
+      expect(err).to.not.exist;
+
+      server.auth.strategy('default', 'jwt', 'required', { key: privateKey, options: { audience: 'urn:foo', issuer: 'urn:issuer' } });
+
+      server.route([
+        { method: 'POST', path: '/token', handler: handler, config: { auth: 'default' } }
+      ]);
+    });
+
+    var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader('john', { audience: 'urn:foo', issuer: 'urn:issuer' }) } };
+
+    server.inject(request, function (res) {
+
+      expect(res.result).to.exist;
+      expect(res.result).to.equal('ok');
+      done();
+    });
+  });
+
   it('returns decoded token when no validation function is set', function (done) {
 
     var handler = function (request, reply) {

@@ -188,7 +188,8 @@ describe('Token', function () {
 
   it('returns an error with expired token', function (done) {
 
-    var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader('john', { expiresInMinutes: -10 }) } };
+    var tenMin = -600;
+    var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader('john', { expiresIn : tenMin }) } };
 
     server.inject(request, function (res) {
       expect(res.result.message).to.equal('Expired token received for JSON Web Token validation');

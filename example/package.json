@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "hapi": "8.x.x",
+    "hapi": "11.x.x",
     "hapi-auth-jwt": "3.x.x",
     "jsonwebtoken": "5.x.x"
   }

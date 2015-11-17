@@ -16,6 +16,12 @@ JSON Web Token authentication requires verifying a signed token. The `'jwt'` sch
         - `credentials` - a credentials object passed back to the application in `request.auth.credentials`. Typically, `credentials` are only
           included when `isValid` is `true`, but there are cases when the application needs to know who tried to authenticate even when it fails
           (e.g. with authentication mode `'try'`).
+- `verifyOptions` - settings to define how tokens are verified by the [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) library
+    - `algorithms`: List of strings with the names of the allowed algorithms. For instance, `["HS256", "HS384"]`.
+    - `audience`: if you want to check audience (`aud`), provide a value here
+    - `issuer`: if you want to check issuer (`iss`), provide a value here
+    - `ignoreExpiration`: if `true` do not validate the expiration of the token.
+    - `maxAge`: optional sets an expiration based on the `iat` field. Eg `2h`
 
 See the example folder for an executable example.
 
@@ -43,7 +49,7 @@ var privateKey = 'BbZJjyoXAdr8BUZuiKKARWimKfrSmQ6fv8kZ7OFfc';
 // Use this token to build your request with the 'Authorization' header.  
 // Ex:
 //     Authorization: Bearer <token>
-var token = jwt.sign({ accountId: 123 }, privateKey);
+var token = jwt.sign({ accountId: 123 }, privateKey, { algorithm: 'HS256'} );
 
 
 var validate = function (request, decodedToken, callback) {
@@ -63,7 +69,8 @@ server.register(require('hapi-auth-jwt'), function (error) {
 
     server.auth.strategy('token', 'jwt', {
         key: privateKey,
-        validateFunc: validate
+        validateFunc: validate,
+        verifyOptions: { algorithms: [ 'HS256' ] }  // only allow HS256 algorithm
     });
 
     server.route({

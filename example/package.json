@@ -8,9 +8,12 @@
   },
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=4.0.0"
+  },
   "dependencies": {
     "hapi": "11.x.x",
-    "hapi-auth-jwt": "3.x.x",
+    "hapi-auth-jwt": "4.x.x",
     "jsonwebtoken": "5.x.x"
   }
 }

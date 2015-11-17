@@ -60,6 +60,7 @@ describe('Token', function () {
 
   var server = new Hapi.Server({ debug: false });
   server.connection();
+
   before(function (done) {
 
     server.register(require('../'), function (err) {
@@ -100,24 +101,50 @@ describe('Token', function () {
       reply('ok');
     };
 
-    var server = new Hapi.Server({ debug: false });
-    server.connection();
-    server.register(require('../'), function (err) {
+    var s = new Hapi.Server({ debug: false });
+    s.connection();
+    s.register(require('../'), function (err) {
       expect(err).to.not.exist;
 
-      server.auth.strategy('default', 'jwt', 'required', { key: privateKey, options: { audience: 'urn:foo', issuer: 'urn:issuer' } });
+      s.auth.strategy('default', 'jwt', 'required', { key: privateKey, verifyOptions: { audience: 'urn:foo', issuer: 'urn:issuer' } });
 
-      server.route([
+      s.route([
         { method: 'POST', path: '/token', handler: handler, config: { auth: 'default' } }
       ]);
     });
 
     var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader('john', { audience: 'urn:foo', issuer: 'urn:issuer' }) } };
 
-    server.inject(request, function (res) {
+    s.inject(request, function (res) {
 
       expect(res.result).to.exist;
       expect(res.result).to.equal('ok');
+      done();
+    });
+  });
+
+  it('returns a 401 unauthorized error when algorithm do not match', function (done) {
+
+    var handler = function (request, reply) {
+      reply('ok');
+    };
+
+    var s = new Hapi.Server({ debug: false });
+    s.connection();
+    s.register(require('../'), function (err) {
+      expect(err).to.not.exist;
+
+      s.auth.strategy('default', 'jwt', 'required', { key: privateKey, verifyOptions: { algorithms : ['HS512'] } });
+
+      s.route([
+        { method: 'POST', path: '/token', handler: handler, config: { auth: 'default' } }
+      ]);
+    });
+
+    var request = { method: 'POST', url: '/token', headers: { authorization: tokenHeader('john', { algorithm : 'HS256' }) } };
+
+    s.inject(request, function (res) {
+      expect(res.statusCode).to.equal(401);
       done();
     });
   });

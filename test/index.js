@@ -18,6 +18,9 @@ var expect = Code.expect;
 describe('Token', function () {
   var privateKey = 'PajeH0mz4of85T9FB1oFzaB39lbNLbDbtCQ';
 
+  var server = new Hapi.Server({ debug: false });
+  server.connection();
+
   var tokenHeader = function (username, options) {
     options = options || {};
 
@@ -57,9 +60,6 @@ describe('Token', function () {
       reply(res.result);
     });
   };
-
-  var server = new Hapi.Server({ debug: false });
-  server.connection();
 
   before(function (done) {
 
@@ -117,6 +117,33 @@ describe('Token', function () {
 
     s.inject(request, function (res) {
 
+      expect(res.result).to.exist;
+      expect(res.result).to.equal('ok');
+      done();
+    });
+  });
+
+  it('returns a reply on successful auth with queryString as option', function (done) {
+
+    var handler = function (request, reply) {
+      reply('ok');
+    };
+
+    var s = new Hapi.Server({ debug: false });
+    s.connection();
+    s.register(require('../'), function (err) {
+      expect(err).to.not.exist;
+
+      s.auth.strategy('default', 'jwt', 'required', { key: privateKey, verifyOptions: { queryString : 'access_token' } });
+
+      s.route([
+        { method: 'GET', path: '/token', handler: handler, config: { auth: 'default' } }
+      ]);
+    });
+
+    var request = { method: 'GET', url: '/token?access_token=' + tokenHeader('john', { queryString : 'access_token' }).split(/\s+/)[1] };
+
+    s.inject(request, function (res) {
       expect(res.result).to.exist;
       expect(res.result).to.equal('ok');
       done();

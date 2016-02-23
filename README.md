@@ -22,6 +22,7 @@ JSON Web Token authentication requires verifying a signed token. The `'jwt'` sch
     - `issuer`: if you want to check issuer (`iss`), provide a value here
     - `ignoreExpiration`: if `true` do not validate the expiration of the token.
     - `maxAge`: optional sets an expiration based on the `iat` field. Eg `2h`
+    - `queryString`: optional if set to a string (e.g. `access_token`), allows passing the token via a query parameter
 
 See the example folder for an executable example.
 

@@ -141,7 +141,7 @@ describe('Token', function () {
       ]);
     });
 
-    var request = { method: 'GET', url: '/token?access_token=' + tokenHeader('john', { queryString : 'access_token' }) };
+    var request = { method: 'GET', url: '/token?access_token=' + tokenHeader('john', { queryString : 'access_token' }).split(/\s+/)[1] };
 
     s.inject(request, function (res) {
       expect(res.result).to.exist;

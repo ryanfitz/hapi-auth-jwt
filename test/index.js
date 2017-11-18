@@ -38,7 +38,7 @@ describe('Token', () => {
       return null;
     }
 
-    return false;
+    throw Boom.notFound();
   };
 
   const tokenHandler = (request, h) => {
@@ -222,213 +222,172 @@ describe('Token', () => {
     expect(res.result).to.equal('ok');
   });
 
-  // it('returns an error on wrong scheme', done => {
-  //   const request = {
-  //     method: 'POST',
-  //     url: '/token',
-  //     headers: { authorization: 'Steve something' },
-  //   };
+  it('returns an error on wrong scheme', async () => {
+    const request = {
+      method: 'POST',
+      url: '/token',
+      headers: { authorization: 'Steve something' },
+    };
 
-  //   server.inject(request, res => {
-  //     expect(res.statusCode).to.equal(401);
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
+    expect(res.statusCode).to.equal(401);
+  });
 
-  // it('returns a reply on successful double auth', done => {
-  //   const request = {
-  //     method: 'POST',
-  //     url: '/double',
-  //     headers: { authorization: tokenHeader('john') },
-  //   };
+  it('returns a reply on successful double auth', async () => {
+    const request = {
+      method: 'POST',
+      url: '/double',
+      headers: { authorization: tokenHeader('john') },
+    };
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.exist;
-  //     expect(res.result).to.equal('ok');
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
 
-  // it('returns a reply on failed optional auth', done => {
-  //   const request = { method: 'POST', url: '/tokenOptional' };
+    expect(res.result).to.equal('ok');
+  });
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.equal('ok');
-  //     done();
-  //   });
-  // });
+  it('returns a reply on failed optional auth', async () => {
+    const request = { method: 'POST', url: '/tokenOptional' };
 
-  // it('returns an error with expired token', done => {
-  //   const tenMin = -600;
-  //   const request = {
-  //     method: 'POST',
-  //     url: '/token',
-  //     headers: { authorization: tokenHeader('john', { expiresIn: tenMin }) },
-  //   };
+    const res = await server.inject(request);
 
-  //   server.inject(request, res => {
-  //     expect(res.result.message).to.equal('Expired token received for JSON Web Token validation');
-  //     expect(res.statusCode).to.equal(401);
-  //     done();
-  //   });
-  // });
+    expect(res.result).to.equal('ok');
+  });
 
-  // it('returns an error with invalid token', done => {
-  //   const token = tokenHeader('john') + '123456123123';
+  it('returns an error with expired token', async () => {
+    const tenMin = -600;
+    const request = {
+      method: 'POST',
+      url: '/token',
+      headers: { authorization: tokenHeader('john', { expiresIn: tenMin }) },
+    };
 
-  //   const request = { method: 'POST', url: '/token', headers: { authorization: token } };
+    const res = await server.inject(request);
+    expect(res.result.message).to.equal('Expired token received for JSON Web Token validation');
+    expect(res.statusCode).to.equal(401);
+  });
 
-  //   server.inject(request, res => {
-  //     expect(res.result.message).to.equal(
-  //       'Invalid signature received for JSON Web Token validation',
-  //     );
-  //     expect(res.statusCode).to.equal(401);
-  //     done();
-  //   });
-  // });
+  it('returns an error with invalid token', async () => {
+    const token = tokenHeader('john') + '123456123123';
 
-  // it('returns an error on bad header format', done => {
-  //   const request = { method: 'POST', url: '/token', headers: { authorization: 'Bearer' } };
+    const request = { method: 'POST', url: '/token', headers: { authorization: token } };
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.exist;
-  //     expect(res.statusCode).to.equal(400);
-  //     expect(res.result.isMissing).to.equal(undefined);
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
+    expect(res.result.message).to.equal('Invalid signature received for JSON Web Token validation');
+    expect(res.statusCode).to.equal(401);
+  });
 
-  // it('returns an error on bad header format', done => {
-  //   const request = { method: 'POST', url: '/token', headers: { authorization: 'bearer' } };
+  it('returns an error on bad header format', async () => {
+    const request = { method: 'POST', url: '/token', headers: { authorization: 'Bearer' } };
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.exist;
-  //     expect(res.statusCode).to.equal(400);
-  //     expect(res.result.isMissing).to.equal(undefined);
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
+    expect(res.statusCode).to.equal(400);
+    expect(res.result.isMissing).to.equal(undefined);
+  });
 
-  // it('returns an error on bad header internal syntax', done => {
-  //   const request = { method: 'POST', url: '/token', headers: { authorization: 'bearer 123' } };
+  it('returns an error on bad header format', async () => {
+    const request = { method: 'POST', url: '/token', headers: { authorization: 'bearer' } };
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.exist;
-  //     expect(res.statusCode).to.equal(400);
-  //     expect(res.result.isMissing).to.equal(undefined);
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
+    expect(res.statusCode).to.equal(400);
+    expect(res.result.isMissing).to.equal(undefined);
+  });
 
-  // it('returns an error on unknown user', done => {
-  //   const request = {
-  //     method: 'POST',
-  //     url: '/token',
-  //     headers: { authorization: tokenHeader('doe') },
-  //   };
+  it('returns an error on bad header internal syntax', async () => {
+    const request = { method: 'POST', url: '/token', headers: { authorization: 'bearer 123' } };
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.exist;
-  //     expect(res.statusCode).to.equal(401);
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
+    expect(res.statusCode).to.equal(400);
+    expect(res.result.isMissing).to.equal(undefined);
+  });
 
-  // it('returns an error on internal user lookup error', done => {
-  //   const request = {
-  //     method: 'POST',
-  //     url: '/token',
-  //     headers: { authorization: tokenHeader('jane') },
-  //   };
+  it('returns an error on unknown user', async () => {
+    const request = {
+      method: 'POST',
+      url: '/token',
+      headers: { authorization: tokenHeader('doe') },
+    };
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.exist;
-  //     expect(res.statusCode).to.equal(500);
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
+    expect(res.statusCode).to.equal(401);
+  });
 
-  // it('returns an error on non-object credentials error', done => {
-  //   const request = {
-  //     method: 'POST',
-  //     url: '/token',
-  //     headers: { authorization: tokenHeader('invalid1') },
-  //   };
+  it('returns an error on internal user lookup error', async () => {
+    const request = {
+      method: 'POST',
+      url: '/token',
+      headers: { authorization: tokenHeader('jane') },
+    };
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.exist;
-  //     expect(res.statusCode).to.equal(500);
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
+    expect(res.statusCode).to.equal(500);
+  });
 
-  // it('returns an error on null credentials error', done => {
-  //   const request = {
-  //     method: 'POST',
-  //     url: '/token',
-  //     headers: { authorization: tokenHeader('nullman') },
-  //   };
+  it('returns an error on non-object credentials error', async () => {
+    const request = {
+      method: 'POST',
+      url: '/token',
+      headers: { authorization: tokenHeader('invalid1') },
+    };
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.exist;
-  //     expect(res.statusCode).to.equal(500);
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
+    expect(res.statusCode).to.equal(500);
+  });
 
-  // it('returns an error on insufficient scope', done => {
-  //   const request = {
-  //     method: 'POST',
-  //     url: '/tokenScope',
-  //     headers: { authorization: tokenHeader('john') },
-  //   };
+  it('returns an error on null credentials error', async () => {
+    const request = {
+      method: 'POST',
+      url: '/token',
+      headers: { authorization: tokenHeader('nullman') },
+    };
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.exist;
-  //     expect(res.statusCode).to.equal(403);
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
+    expect(res.statusCode).to.equal(500);
+  });
 
-  // it('returns an error on insufficient scope specified as an array', done => {
-  //   const request = {
-  //     method: 'POST',
-  //     url: '/tokenArrayScope',
-  //     headers: { authorization: tokenHeader('john') },
-  //   };
+  it('returns an error on insufficient scope', async () => {
+    const request = {
+      method: 'POST',
+      url: '/tokenScope',
+      headers: { authorization: tokenHeader('john') },
+    };
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.exist;
-  //     expect(res.statusCode).to.equal(403);
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
+    expect(res.statusCode).to.equal(403);
+  });
 
-  // it('authenticates scope specified as an array', done => {
-  //   const request = {
-  //     method: 'POST',
-  //     url: '/tokenArrayScopeA',
-  //     headers: { authorization: tokenHeader('john') },
-  //   };
+  it('returns an error on insufficient scope specified as an array', async () => {
+    const request = {
+      method: 'POST',
+      url: '/tokenArrayScope',
+      headers: { authorization: tokenHeader('john') },
+    };
 
-  //   server.inject(request, res => {
-  //     expect(res.result).to.exist;
-  //     expect(res.statusCode).to.equal(200);
-  //     done();
-  //   });
-  // });
+    const res = await server.inject(request);
+    expect(res.statusCode).to.equal(403);
+  });
 
-  // it('cannot add a route that has payload validation required', done => {
-  //   const fn = () => {
-  //     server.route({
-  //       method: 'POST',
-  //       path: '/tokenPayload',
-  //       handler: tokenHandler,
-  //       config: { auth: { mode: 'required', payload: 'required' } },
-  //     });
-  //   };
+  it('authenticates scope specified as an array', async () => {
+    const request = {
+      method: 'POST',
+      url: '/tokenArrayScopeA',
+      headers: { authorization: tokenHeader('john') },
+    };
 
-  //   expect(fn).to.throw(Error);
-  //   done();
-  // });
+    const res = await server.inject(request);
+    expect(res.statusCode).to.equal(200);
+  });
+
+  it('cannot add a route that has payload validation required', done => {
+    const fn = () => {
+      server.route({
+        method: 'POST',
+        path: '/tokenPayload',
+        handler: tokenHandler,
+        options: { auth: { mode: 'required', payload: 'required' } },
+      });
+    };
+
+    expect(fn).to.throw(Error);
+    done();
+  });
 });

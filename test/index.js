@@ -17,406 +17,418 @@ const it = lab.it;
 const expect = Code.expect;
 
 describe('Token', () => {
-    const privateKey = 'PajeH0mz4of85T9FB1oFzaB39lbNLbDbtCQ';
+  const privateKey = 'PajeH0mz4of85T9FB1oFzaB39lbNLbDbtCQ';
 
-    const tokenHeader = (username, options = {}) => `Bearer ${Jwt.sign({ username: username }, privateKey, options)}`;
+  const tokenHeader = (username, options = {}) =>
+    `Bearer ${Jwt.sign({ username: username }, privateKey, options)}`;
 
-    const loadUser = (request, decodedToken) => {
-        const username = decodedToken.username;
+  const loadUser = (request, decodedToken) => {
+    const username = decodedToken.username;
 
-        if (username === 'john') {
-            return {
-                user: 'john',
-                scope: ['a']
-            };
-        } else if (username === 'jane') {
-            throw Boom.badImplementation();
-        } else if (username === 'invalid1') {
-            return 'bad';
-        } else if (username === 'nullman') {
-            return null;
-        }
+    if (username === 'john') {
+      return {
+        user: 'john',
+        scope: ['a'],
+      };
+    } else if (username === 'jane') {
+      throw Boom.badImplementation();
+    } else if (username === 'invalid1') {
+      return 'bad';
+    } else if (username === 'nullman') {
+      return null;
+    }
 
-        return false;
+    return false;
+  };
+
+  const tokenHandler = (request, h) => {
+    return 'ok';
+  };
+
+  const doubleHandler = async (request, h) => {
+    const options = {
+      method: 'POST',
+      url: '/token',
+      headers: { authorization: tokenHeader('john') },
+      credentials: request.auth.credentials,
     };
 
-    const tokenHandler = (request, h) => {
-        return 'ok';
-    };
+    const res = await server.inject(options);
+    return res.result;
+  };
 
-    const doubleHandler = async (request, h) => {
-        const options = {
-            method: 'POST',
-            url: '/token',
-            headers: { authorization: tokenHeader('john') },
-            credentials: request.auth.credentials
-        };
+  const server = new Hapi.Server({ debug: false });
 
-        const res = await server.inject(options);
-        return res.result;
-    };
-
-    const server = new Hapi.Server({ debug: false });
-
-    before(async () => {
-        await server.initialize();
-        await server.register([hapiAuthJwt]);
-        server.auth.strategy('default', 'jwt', {
-            key: privateKey,
-            validateFunc: loadUser
-        });
-
-        server.route([
-            {
-                method: 'POST',
-                path: '/token',
-                handler: tokenHandler,
-                options: {
-                    auth: 'default'
-                }
-            }
-            // {
-            //     method: 'POST',
-            //     path: '/tokenOptional',
-            //     handler: tokenHandler,
-            //     options: { access: { mode: 'optional' } }
-            // },
-            // {
-            //     method: 'POST',
-            //     path: '/tokenScope',
-            //     handler: tokenHandler,
-            //     options: { auth: { scope: 'x' } }
-            // },
-            // {
-            //     method: 'POST',
-            //     path: '/tokenArrayScope',
-            //     handler: tokenHandler,
-            //     options: { auth: { scope: ['x', 'y'] } }
-            // },
-            // {
-            //     method: 'POST',
-            //     path: '/tokenArrayScopeA',
-            //     handler: tokenHandler,
-            //     options: { auth: { scope: ['x', 'y', 'a'] } }
-            // },
-            // { method: 'POST', path: '/double', handler: doubleHandler }
-        ]);
-
-        return Promise.resolve();
+  before(async () => {
+    await server.initialize();
+    await server.register([hapiAuthJwt]);
+    server.auth.strategy('default', 'jwt', {
+      key: privateKey,
+      validateFunc: loadUser,
     });
 
-    it('returns a reply on successful auth', async () => {
-        const request = {
-            method: 'POST',
-            url: '/token',
-            headers: { authorization: tokenHeader('john') }
-        };
+    server.route([
+      {
+        method: 'POST',
+        path: '/token',
+        handler: tokenHandler,
+        options: {
+          auth: 'default',
+        },
+      },
+      {
+        method: 'POST',
+        path: '/tokenOptional',
+        handler: tokenHandler,
+        options: {
+          auth: {
+            strategies: ['default'],
+            mode: 'optional',
+          },
+        },
+      },
+      {
+        method: 'POST',
+        path: '/tokenScope',
+        handler: tokenHandler,
+        options: {
+          auth: {
+            strategies: ['default'],
+            access: {
+              scope: 'x',
+            },
+          },
+        },
+      },
+      {
+        method: 'POST',
+        path: '/tokenArrayScope',
+        handler: tokenHandler,
+        options: {
+          auth: {
+            strategies: ['default'],
+            access: {
+              scope: ['x', 'y'],
+            },
+          },
+        },
+      },
+      {
+        method: 'POST',
+        path: '/tokenArrayScopeA',
+        handler: tokenHandler,
+        options: {
+          auth: {
+            strategies: ['default'],
+            access: {
+              scope: ['x', 'y', 'a'],
+            },
+          },
+        },
+      },
+      { method: 'POST', path: '/double', handler: doubleHandler },
+    ]);
 
-        const res = await server.inject(request);
-        expect(res.result).to.exist;
-        expect(res.result).to.equal('ok');
+    return Promise.resolve();
+  });
+
+  it('returns a reply on successful auth', async () => {
+    const request = {
+      method: 'POST',
+      url: '/token',
+      headers: { authorization: tokenHeader('john') },
+    };
+
+    const res = await server.inject(request);
+    expect(res.result).to.equal('ok');
+  });
+
+  it('returns a reply on successful auth with audience (aud) and issuer (iss) as options', async () => {
+    const handler = request => {
+      expect(request.auth.isAuthenticated).to.equal(true);
+      return 'ok';
+    };
+
+    const s = new Hapi.Server({ debug: false });
+    await s.initialize();
+
+    await s.register([hapiAuthJwt]);
+    s.auth.strategy('default', 'jwt', {
+      key: privateKey,
+      verifyOptions: { audience: 'urn:foo', issuer: 'urn:issuer' },
+    });
+    s.route([{ method: 'POST', path: '/token', handler: handler, config: { auth: 'default' } }]);
+
+    const request = {
+      method: 'POST',
+      url: '/token',
+      headers: {
+        authorization: tokenHeader('john', { audience: 'urn:foo', issuer: 'urn:issuer' }),
+      },
+    };
+
+    const res = await s.inject(request);
+    expect(res.result).to.equal('ok');
+  });
+
+  it('returns a 401 unauthorized error when algorithm do not match', async () => {
+    const handler = () => {
+      return 'ok';
+    };
+
+    const s = new Hapi.Server({ debug: false });
+    await s.initialize();
+    await s.register([hapiAuthJwt]);
+
+    s.auth.strategy('default', 'jwt', {
+      key: privateKey,
+      verifyOptions: { algorithms: ['HS512'] },
     });
 
-    // it('returns a reply on successful auth with audience (aud) and issuer (iss) as options', done => {
-    //     const handler = (request, h) => {
-    //         expect(request.auth.isAuthenticated).to.equal(true);
-    //         expect(request.auth.credentials).to.exist;
-    //         return 'ok';
-    //     };
+    s.route([{ method: 'POST', path: '/token', handler: handler, options: { auth: 'default' } }]);
 
-    //     const s = new Hapi.Server({ debug: false });
-    //     s.connection();
-    //     s.register(require('../'), err => {
-    //         expect(err).to.not.exist;
+    const request = {
+      method: 'POST',
+      url: '/token',
+      headers: { authorization: tokenHeader('john', { algorithm: 'HS256' }) },
+    };
 
-    //         s.auth.strategy('default', 'jwt', 'required', {
-    //             key: privateKey,
-    //             verifyOptions: { audience: 'urn:foo', issuer: 'urn:issuer' }
-    //         });
+    const res = await s.inject(request);
+    expect(res.statusCode).to.equal(401);
+  });
 
-    //         s.route([{ method: 'POST', path: '/token', handler: handler, config: { auth: 'default' } }]);
-    //     });
+  it('returns decoded token when no validation  is set', async () => {
+    const handler = request => {
+      expect(request.auth.isAuthenticated).to.equal(true);
+      return 'ok';
+    };
 
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/token',
-    //         headers: {
-    //             authorization: tokenHeader('john', { audience: 'urn:foo', issuer: 'urn:issuer' })
-    //         }
-    //     };
+    const s = new Hapi.Server({ debug: false });
+    await s.initialize();
+    await s.register([hapiAuthJwt]);
 
-    //     s.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.result).to.equal('ok');
-    //         done();
-    //     });
-    // });
+    s.auth.strategy('default', 'jwt', { key: privateKey });
 
-    // it('returns a 401 unauthorized error when algorithm do not match', done => {
-    //     const handler = (request, h) => {
-    //         reply('ok');
-    //     };
+    s.route([{ method: 'POST', path: '/token', handler: handler, config: { auth: 'default' } }]);
 
-    //     const s = new Hapi.Server({ debug: false });
-    //     s.connection();
-    //     s.register(require('../'), err => {
-    //         expect(err).to.not.exist;
+    const request = {
+      method: 'POST',
+      url: '/token',
+      headers: { authorization: tokenHeader('john') },
+    };
 
-    //         s.auth.strategy('default', 'jwt', 'required', {
-    //             key: privateKey,
-    //             verifyOptions: { algorithms: ['HS512'] }
-    //         });
+    const res = await s.inject(request);
 
-    //         s.route([{ method: 'POST', path: '/token', handler: handler, config: { auth: 'default' } }]);
-    //     });
+    expect(res.result).to.equal('ok');
+  });
 
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/token',
-    //         headers: { authorization: tokenHeader('john', { algorithm: 'HS256' }) }
-    //     };
+  // it('returns an error on wrong scheme', done => {
+  //   const request = {
+  //     method: 'POST',
+  //     url: '/token',
+  //     headers: { authorization: 'Steve something' },
+  //   };
 
-    //     s.inject(request, res => {
-    //         expect(res.statusCode).to.equal(401);
-    //         done();
-    //     });
-    // });
+  //   server.inject(request, res => {
+  //     expect(res.statusCode).to.equal(401);
+  //     done();
+  //   });
+  // });
 
-    // it('returns decoded token when no validation  is set', done => {
-    //     const handler = (request, h) => {
-    //         expect(request.auth.isAuthenticated).to.equal(true);
-    //         expect(request.auth.credentials).to.exist;
-    //         reply('ok');
-    //     };
+  // it('returns a reply on successful double auth', done => {
+  //   const request = {
+  //     method: 'POST',
+  //     url: '/double',
+  //     headers: { authorization: tokenHeader('john') },
+  //   };
 
-    //     const server = new Hapi.Server({ debug: false });
-    //     server.connection();
-    //     server.register(require('../'), err => {
-    //         expect(err).to.not.exist;
+  //   server.inject(request, res => {
+  //     expect(res.result).to.exist;
+  //     expect(res.result).to.equal('ok');
+  //     done();
+  //   });
+  // });
 
-    //         server.auth.strategy('default', 'jwt', 'required', { key: privateKey });
+  // it('returns a reply on failed optional auth', done => {
+  //   const request = { method: 'POST', url: '/tokenOptional' };
 
-    //         server.route([{ method: 'POST', path: '/token', handler: handler, config: { auth: 'default' } }]);
-    //     });
+  //   server.inject(request, res => {
+  //     expect(res.result).to.equal('ok');
+  //     done();
+  //   });
+  // });
 
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/token',
-    //         headers: { authorization: tokenHeader('john') }
-    //     };
+  // it('returns an error with expired token', done => {
+  //   const tenMin = -600;
+  //   const request = {
+  //     method: 'POST',
+  //     url: '/token',
+  //     headers: { authorization: tokenHeader('john', { expiresIn: tenMin }) },
+  //   };
 
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.result).to.equal('ok');
-    //         done();
-    //     });
-    // });
+  //   server.inject(request, res => {
+  //     expect(res.result.message).to.equal('Expired token received for JSON Web Token validation');
+  //     expect(res.statusCode).to.equal(401);
+  //     done();
+  //   });
+  // });
 
-    // it('returns an error on wrong scheme', done => {
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/token',
-    //         headers: { authorization: 'Steve something' }
-    //     };
+  // it('returns an error with invalid token', done => {
+  //   const token = tokenHeader('john') + '123456123123';
 
-    //     server.inject(request, res => {
-    //         expect(res.statusCode).to.equal(401);
-    //         done();
-    //     });
-    // });
+  //   const request = { method: 'POST', url: '/token', headers: { authorization: token } };
 
-    // it('returns a reply on successful double auth', done => {
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/double',
-    //         headers: { authorization: tokenHeader('john') }
-    //     };
+  //   server.inject(request, res => {
+  //     expect(res.result.message).to.equal(
+  //       'Invalid signature received for JSON Web Token validation',
+  //     );
+  //     expect(res.statusCode).to.equal(401);
+  //     done();
+  //   });
+  // });
 
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.result).to.equal('ok');
-    //         done();
-    //     });
-    // });
+  // it('returns an error on bad header format', done => {
+  //   const request = { method: 'POST', url: '/token', headers: { authorization: 'Bearer' } };
 
-    // it('returns a reply on failed optional auth', done => {
-    //     const request = { method: 'POST', url: '/tokenOptional' };
+  //   server.inject(request, res => {
+  //     expect(res.result).to.exist;
+  //     expect(res.statusCode).to.equal(400);
+  //     expect(res.result.isMissing).to.equal(undefined);
+  //     done();
+  //   });
+  // });
 
-    //     server.inject(request, res => {
-    //         expect(res.result).to.equal('ok');
-    //         done();
-    //     });
-    // });
+  // it('returns an error on bad header format', done => {
+  //   const request = { method: 'POST', url: '/token', headers: { authorization: 'bearer' } };
 
-    // it('returns an error with expired token', done => {
-    //     const tenMin = -600;
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/token',
-    //         headers: { authorization: tokenHeader('john', { expiresIn: tenMin }) }
-    //     };
+  //   server.inject(request, res => {
+  //     expect(res.result).to.exist;
+  //     expect(res.statusCode).to.equal(400);
+  //     expect(res.result.isMissing).to.equal(undefined);
+  //     done();
+  //   });
+  // });
 
-    //     server.inject(request, res => {
-    //         expect(res.result.message).to.equal('Expired token received for JSON Web Token validation');
-    //         expect(res.statusCode).to.equal(401);
-    //         done();
-    //     });
-    // });
+  // it('returns an error on bad header internal syntax', done => {
+  //   const request = { method: 'POST', url: '/token', headers: { authorization: 'bearer 123' } };
 
-    // it('returns an error with invalid token', done => {
-    //     const token = tokenHeader('john') + '123456123123';
+  //   server.inject(request, res => {
+  //     expect(res.result).to.exist;
+  //     expect(res.statusCode).to.equal(400);
+  //     expect(res.result.isMissing).to.equal(undefined);
+  //     done();
+  //   });
+  // });
 
-    //     const request = { method: 'POST', url: '/token', headers: { authorization: token } };
+  // it('returns an error on unknown user', done => {
+  //   const request = {
+  //     method: 'POST',
+  //     url: '/token',
+  //     headers: { authorization: tokenHeader('doe') },
+  //   };
 
-    //     server.inject(request, res => {
-    //         expect(res.result.message).to.equal('Invalid signature received for JSON Web Token validation');
-    //         expect(res.statusCode).to.equal(401);
-    //         done();
-    //     });
-    // });
+  //   server.inject(request, res => {
+  //     expect(res.result).to.exist;
+  //     expect(res.statusCode).to.equal(401);
+  //     done();
+  //   });
+  // });
 
-    // it('returns an error on bad header format', done => {
-    //     const request = { method: 'POST', url: '/token', headers: { authorization: 'Bearer' } };
+  // it('returns an error on internal user lookup error', done => {
+  //   const request = {
+  //     method: 'POST',
+  //     url: '/token',
+  //     headers: { authorization: tokenHeader('jane') },
+  //   };
 
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.statusCode).to.equal(400);
-    //         expect(res.result.isMissing).to.equal(undefined);
-    //         done();
-    //     });
-    // });
+  //   server.inject(request, res => {
+  //     expect(res.result).to.exist;
+  //     expect(res.statusCode).to.equal(500);
+  //     done();
+  //   });
+  // });
 
-    // it('returns an error on bad header format', done => {
-    //     const request = { method: 'POST', url: '/token', headers: { authorization: 'bearer' } };
+  // it('returns an error on non-object credentials error', done => {
+  //   const request = {
+  //     method: 'POST',
+  //     url: '/token',
+  //     headers: { authorization: tokenHeader('invalid1') },
+  //   };
 
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.statusCode).to.equal(400);
-    //         expect(res.result.isMissing).to.equal(undefined);
-    //         done();
-    //     });
-    // });
+  //   server.inject(request, res => {
+  //     expect(res.result).to.exist;
+  //     expect(res.statusCode).to.equal(500);
+  //     done();
+  //   });
+  // });
 
-    // it('returns an error on bad header internal syntax', done => {
-    //     const request = { method: 'POST', url: '/token', headers: { authorization: 'bearer 123' } };
+  // it('returns an error on null credentials error', done => {
+  //   const request = {
+  //     method: 'POST',
+  //     url: '/token',
+  //     headers: { authorization: tokenHeader('nullman') },
+  //   };
 
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.statusCode).to.equal(400);
-    //         expect(res.result.isMissing).to.equal(undefined);
-    //         done();
-    //     });
-    // });
+  //   server.inject(request, res => {
+  //     expect(res.result).to.exist;
+  //     expect(res.statusCode).to.equal(500);
+  //     done();
+  //   });
+  // });
 
-    // it('returns an error on unknown user', done => {
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/token',
-    //         headers: { authorization: tokenHeader('doe') }
-    //     };
+  // it('returns an error on insufficient scope', done => {
+  //   const request = {
+  //     method: 'POST',
+  //     url: '/tokenScope',
+  //     headers: { authorization: tokenHeader('john') },
+  //   };
 
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.statusCode).to.equal(401);
-    //         done();
-    //     });
-    // });
+  //   server.inject(request, res => {
+  //     expect(res.result).to.exist;
+  //     expect(res.statusCode).to.equal(403);
+  //     done();
+  //   });
+  // });
 
-    // it('returns an error on internal user lookup error', done => {
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/token',
-    //         headers: { authorization: tokenHeader('jane') }
-    //     };
+  // it('returns an error on insufficient scope specified as an array', done => {
+  //   const request = {
+  //     method: 'POST',
+  //     url: '/tokenArrayScope',
+  //     headers: { authorization: tokenHeader('john') },
+  //   };
 
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.statusCode).to.equal(500);
-    //         done();
-    //     });
-    // });
+  //   server.inject(request, res => {
+  //     expect(res.result).to.exist;
+  //     expect(res.statusCode).to.equal(403);
+  //     done();
+  //   });
+  // });
 
-    // it('returns an error on non-object credentials error', done => {
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/token',
-    //         headers: { authorization: tokenHeader('invalid1') }
-    //     };
+  // it('authenticates scope specified as an array', done => {
+  //   const request = {
+  //     method: 'POST',
+  //     url: '/tokenArrayScopeA',
+  //     headers: { authorization: tokenHeader('john') },
+  //   };
 
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.statusCode).to.equal(500);
-    //         done();
-    //     });
-    // });
+  //   server.inject(request, res => {
+  //     expect(res.result).to.exist;
+  //     expect(res.statusCode).to.equal(200);
+  //     done();
+  //   });
+  // });
 
-    // it('returns an error on null credentials error', done => {
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/token',
-    //         headers: { authorization: tokenHeader('nullman') }
-    //     };
+  // it('cannot add a route that has payload validation required', done => {
+  //   const fn = () => {
+  //     server.route({
+  //       method: 'POST',
+  //       path: '/tokenPayload',
+  //       handler: tokenHandler,
+  //       config: { auth: { mode: 'required', payload: 'required' } },
+  //     });
+  //   };
 
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.statusCode).to.equal(500);
-    //         done();
-    //     });
-    // });
-
-    // it('returns an error on insufficient scope', done => {
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/tokenScope',
-    //         headers: { authorization: tokenHeader('john') }
-    //     };
-
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.statusCode).to.equal(403);
-    //         done();
-    //     });
-    // });
-
-    // it('returns an error on insufficient scope specified as an array', done => {
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/tokenArrayScope',
-    //         headers: { authorization: tokenHeader('john') }
-    //     };
-
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.statusCode).to.equal(403);
-    //         done();
-    //     });
-    // });
-
-    // it('authenticates scope specified as an array', done => {
-    //     const request = {
-    //         method: 'POST',
-    //         url: '/tokenArrayScopeA',
-    //         headers: { authorization: tokenHeader('john') }
-    //     };
-
-    //     server.inject(request, res => {
-    //         expect(res.result).to.exist;
-    //         expect(res.statusCode).to.equal(200);
-    //         done();
-    //     });
-    // });
-
-    // it('cannot add a route that has payload validation required', done => {
-    //     const fn = () => {
-    //         server.route({
-    //             method: 'POST',
-    //             path: '/tokenPayload',
-    //             handler: tokenHandler,
-    //             config: { auth: { mode: 'required', payload: 'required' } }
-    //         });
-    //     };
-
-    //     expect(fn).to.throw(Error);
-    //     done();
-    // });
+  //   expect(fn).to.throw(Error);
+  //   done();
+  // });
 });

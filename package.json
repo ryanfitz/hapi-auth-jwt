@@ -1,5 +1,5 @@
 {
-  "name": "hapi-auth-jwt",
+  "name": "@tanepiper/hapi-auth-jwt",
   "description": "JSON Web Token (JWT) authentication plugin",
   "version": "4.0.0",
   "author": "Ryan Fitzgerald <ryan.fitz1@gmail.com>",

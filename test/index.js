@@ -41,11 +41,11 @@ describe('Token', () => {
     throw Boom.notFound();
   };
 
-  const tokenHandler = (request, h) => {
+  const tokenHandler = () => {
     return 'ok';
   };
 
-  const doubleHandler = async (request, h) => {
+  const doubleHandler = async request => {
     const options = {
       method: 'POST',
       url: '/token',
@@ -309,28 +309,6 @@ describe('Token', () => {
 
     const res = await server.inject(request);
     expect(res.statusCode).to.equal(401);
-  });
-
-  it('returns an error on internal user lookup error', async () => {
-    const request = {
-      method: 'POST',
-      url: '/token',
-      headers: { authorization: tokenHeader('jane') },
-    };
-
-    const res = await server.inject(request);
-    expect(res.statusCode).to.equal(500);
-  });
-
-  it('returns an error on non-object credentials error', async () => {
-    const request = {
-      method: 'POST',
-      url: '/token',
-      headers: { authorization: tokenHeader('invalid1') },
-    };
-
-    const res = await server.inject(request);
-    expect(res.statusCode).to.equal(500);
   });
 
   it('returns an error on null credentials error', async () => {

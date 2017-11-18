@@ -10,12 +10,6 @@ JSON Web Token authentication requires verifying a signed token. The `'jwt'` sch
 - `validateFunc` - (optional) validation and user lookup function with the signature `function(request, token, callback)` where:
     - `request` - is the hapi request object of the request which is being authenticated.
     - `token` - the verified and decoded jwt token
-    - `callback` - a callback function with the signature `function(err, isValid, credentials)` where:
-        - `err` - an internal error.
-        - `isValid` - `true` if the token was valid otherwise `false`.
-        - `credentials` - a credentials object passed back to the application in `request.auth.credentials`. Typically, `credentials` are only
-          included when `isValid` is `true`, but there are cases when the application needs to know who tried to authenticate even when it fails
-          (e.g. with authentication mode `'try'`).
 - `verifyOptions` - settings to define how tokens are verified by the [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) library
     - `algorithms`: List of strings with the names of the allowed algorithms. For instance, `["HS256", "HS384"]`.
     - `audience`: if you want to check audience (`aud`), provide a value here
@@ -26,15 +20,13 @@ JSON Web Token authentication requires verifying a signed token. The `'jwt'` sch
 See the example folder for an executable example.
 
 ```javascript
+const Hapi = require('hapi');
+const jwt = require('jsonwebtoken');
+const server = new Hapi.Server({ port: 8080 });
 
-var Hapi = require('hapi'),
-    jwt = require('jsonwebtoken'),
-    server = new Hapi.Server();
+await server.connection();
 
-server.connection({ port: 8080 });
-
-
-var accounts = {
+const accounts = {
     123: {
         id: 123,
         user: 'john',
@@ -43,58 +35,48 @@ var accounts = {
     }
 };
 
-
-var privateKey = 'BbZJjyoXAdr8BUZuiKKARWimKfrSmQ6fv8kZ7OFfc';
+const privateKey = 'BbZJjyoXAdr8BUZuiKKARWimKfrSmQ6fv8kZ7OFfc';
 
 // Use this token to build your request with the 'Authorization' header.  
 // Ex:
 //     Authorization: Bearer <token>
-var token = jwt.sign({ accountId: 123 }, privateKey, { algorithm: 'HS256'} );
+const token = jwt.sign({ accountId: 123 }, privateKey, { algorithm: 'HS256'} );
 
-
-var validate = function (request, decodedToken, callback) {
-
-    var error,
-        credentials = accounts[decodedToken.accountId] || {};
-
-    if (!credentials) {
-        return callback(error, false, credentials);
-    }
-
-    return callback(error, true, credentials)
+const validate = async function (request, decodedToken) {
+  
+  const credentials = await getUser(decodedToken.accountId);
+  if (!credentials) {
+    throw Boom.notFound();
+  }
+  return credentials;
 };
 
-
-server.register(require('hapi-auth-jwt'), function (error) {
-
-    server.auth.strategy('token', 'jwt', {
-        key: privateKey,
-        validateFunc: validate,
-        verifyOptions: { algorithms: [ 'HS256' ] }  // only allow HS256 algorithm
-    });
-
-    server.route({
-        method: 'GET',
-        path: '/',
-        config: {
-            auth: 'token'
-        }
-    });
-
-    // With scope requirements
-    server.route({
-        method: 'GET',
-        path: '/withScope',
-        config: {
-            auth: {
-                strategy: 'token',
-                scope: ['a']
-            }
-        }
-    });
+await server.register(require('hapi-auth-jwt'));
+server.auth.strategy('token', 'jwt', {
+  key: privateKey,
+  validateFunc: validate,
+  verifyOptions: { algorithms: [ 'HS256' ] }  // only allow HS256 algorithm
 });
 
+server.route({
+    method: 'GET',
+    path: '/',
+    options: {
+        auth: 'token'
+    }
+});
 
-server.start();
+// With scope requirements
+server.route({
+    method: 'GET',
+    path: '/withScope',
+    options: {
+        auth: {
+            strategy: 'token',
+            scope: ['a']
+        }
+    }
+});
 
+await server.start();
 ```
